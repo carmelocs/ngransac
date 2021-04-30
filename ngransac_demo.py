@@ -71,9 +71,10 @@ if len(model_file) == 0:
 	print("No model file specified. Inferring pre-trained model from given parameters:")
 	print(model_file)
 
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 model = CNNet(opt.resblocks)
-model.load_state_dict(torch.load(model_file))
-model = model.cuda()
+model.load_state_dict(torch.load(model_file, map_location=torch.device(device)))
+model = model.to(device)
 model.eval()
 print("Successfully loaded model.")
 
@@ -154,8 +155,8 @@ else:
 	# === CASE ESSENTIAL MATRIX =========================================
 
 	# normalize key point coordinates when fitting the essential matrix
-	pts1 = cv2.undistortPoints(pts1, K1, None)
-	pts2 = cv2.undistortPoints(pts2, K2, None)
+	pts1 = cv2.undistortPoints(pts1, K1, None).transpose(1, 0, 2)
+	pts2 = cv2.undistortPoints(pts2, K2, None).transpose(1, 0, 2)
 
 	K = np.eye(3)
 
@@ -186,7 +187,7 @@ correspondences = np.transpose(correspondences)
 correspondences = torch.from_numpy(correspondences).float()
 
 # predict neural guidance, i.e. RANSAC sampling probabilities
-log_probs = model(correspondences.unsqueeze(0).cuda())[0] #zero-indexing creates and removes a dummy batch dimension
+log_probs = model(correspondences.unsqueeze(0).to(device))[0] #zero-indexing creates and removes a dummy batch dimension
 probs = torch.exp(log_probs).cpu()
 
 out_model = torch.zeros((3, 3)).float() # estimated model

@@ -4,6 +4,7 @@ import os
 import cv2
 import math
 import util
+# import pdb
 
 from torch.utils.data import Dataset
 
@@ -29,6 +30,7 @@ class SparseDataset(Dataset):
 		return len(self.files)
 
 	def __getitem__(self, idx):
+		# pdb.set_trace()
 
 		# load precalculated correspondences
 		data = np.load(self.files[idx], allow_pickle=True)
@@ -61,8 +63,8 @@ class SparseDataset(Dataset):
 			util.normalize_pts(pts2, im_size2)
 		else:
 			#for essential matrices, normalize image coordinate using the calibration parameters
-			pts1 = cv2.undistortPoints(pts1, K1.numpy(), None)
-			pts2 = cv2.undistortPoints(pts2, K2.numpy(), None)
+			pts1 = cv2.undistortPoints(pts1, K1.numpy(), None).transpose(1, 0, 2)
+			pts2 = cv2.undistortPoints(pts2, K2.numpy(), None).transpose(1, 0, 2)
 
 		# stack image coordinates and side information into one tensor
 		correspondences = np.concatenate((pts1, pts2, ratios), axis=2)

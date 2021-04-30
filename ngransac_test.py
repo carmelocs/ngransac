@@ -11,6 +11,8 @@ from network import CNNet
 from dataset import SparseDataset
 import util
 
+# import pdb
+
 parser = util.create_parser(
 	description = "Test NG-RANSAC on pre-calculated correspondences.")
 
@@ -42,6 +44,7 @@ opt = parser.parse_args()
 
 print("")
 
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 if opt.uniform:
 	print("Using uniform sampling (no model loaded).")
@@ -55,8 +58,8 @@ else:
 		print(model_file)
 
 	model = CNNet(opt.resblocks)
-	model.load_state_dict(torch.load(model_file))
-	model = model.cuda()
+	model.load_state_dict(torch.load(model_file, map_location=torch.device(device)))
+	model = model.to(device)
 	model.eval()
 	print("Successfully loaded model.")
 
@@ -96,6 +99,7 @@ for dataset in datasets:
 	invalid_pairs = 0
 
 	with torch.no_grad():
+		# pdb.set_trace()
 		for correspondences, gt_F, gt_E, gt_R, gt_t, K1, K2, im_size1, im_size2 in testset_loader:
 
 			print("Processing batch", avg_counter+1, "of", len(testset_loader))
@@ -110,7 +114,7 @@ for dataset in datasets:
 				probs = torch.ones((correspondences.size(0), 1, correspondences.size(2), 1))
 			else:
 				# predict sampling weights /neural guidance
-				log_probs = model(correspondences.cuda())
+				log_probs = model(correspondences.to(device))
 				probs = torch.exp(log_probs).cpu()
 
 			avg_model_time += (time.time()-start_time) / opt.batchsize
