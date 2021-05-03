@@ -30,8 +30,8 @@ def denormalize_pts(pts, im_size):
 	im_size -- image height and width
 	"""	
 	pts *= max(im_size)
-	pts[0] += im_size[1] / 2
-	pts[1] += im_size[0] / 2
+	pts[0] += im_size[1] // 2
+	pts[1] += im_size[0] // 2
 
 def AUC(losses, thresholds, binsize):
 	"""Compute the AUC up to a set of error thresholds.

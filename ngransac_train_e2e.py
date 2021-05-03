@@ -63,11 +63,13 @@ trainset_loader = torch.utils.data.DataLoader(trainset, shuffle=True, num_worker
 
 print("\nImage pairs: ", len(trainset), "\n")
 
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
 # create or load model
 model = CNNet(opt.resblocks)
 if len(opt.model) > 0:
 	model.load_state_dict(torch.load(opt.model))
-model = model.cuda()
+model = model.to(device)
 model.train()
 
 optimizer = optim.Adam(model.parameters(), lr=opt.learningrate)
@@ -93,7 +95,7 @@ for epoch in range(0, opt.epochs):
 		gt_t = gt_t.numpy()
 
 		# predict neural guidance
-		log_probs = model(correspondences.cuda())
+		log_probs = model(correspondences.to(device))
 		probs = torch.exp(log_probs).cpu()
 
 		# this tensor will contain the gradients for the entire batch
@@ -195,7 +197,7 @@ for epoch in range(0, opt.epochs):
 		train_log.write('%d %f\n' % (iteration, avg_loss))
 
 		# update model
-		torch.autograd.backward((log_probs), (log_probs_grad.cuda()))
+		torch.autograd.backward((log_probs), (log_probs_grad.to(device)))
 		optimizer.step() 
 		optimizer.zero_grad()
 
